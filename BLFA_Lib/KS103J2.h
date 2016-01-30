@@ -18,6 +18,7 @@ class KS103J2{
 public:
 	KS103J2(uint8_t pin, uint16_t fixedRes, bool isFarenheit);
 	void setUnit(bool isFarenheit);
+	bool getUnit(void);
 	void setResistance(uint16_t fixedRes);
 	int16_t read(void);
 private:

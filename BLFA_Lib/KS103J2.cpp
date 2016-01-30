@@ -83,6 +83,10 @@ void KS103J2::setUnit(bool isFarenheit){
 	_isFarenheit = isFarenheit;
 }
 
+bool  KS103J2::getUnit(void){
+  return _isFarenheit;
+}
+
 void  KS103J2::setResistance(uint16_t fixedRes){
 	constrain(fixedRes,0,50000);
 	_fixedRes = fixedRes;
@@ -93,13 +97,13 @@ int16_t KS103J2::read(void){
 
 	//Get Raw ADC
 	uint16_t adcRaw = analogReadModeFilter(100);
-	
+
 	//Calculate Voltage (x100) =RAW/adcResolution*Vsupply
 	uint32_t voltage = adcRaw*3300/4096;
-	
+
 	//Calculate Resistance RTop = ((VSupply*Rbottom)/VMidPoint) - RBottom
 	uint32_t resistance = ((3300*_fixedRes)/voltage) - _fixedRes;
-	
+
 	//Lookup Temperature (Celcius) in table
   for( uint8_t i = 0; i < arraySize(RT); i++ )
   {
@@ -111,14 +115,11 @@ int16_t KS103J2::read(void){
       temperature = RT[i].temp + ( RT[i-1].temp - RT[i].temp ) * diffResistance / diffRT;
     }
   }
-  Serial.printlnf("Temperature: %d C",temperature); 
-	
   //Convert to Farenheit
 	if(_isFarenheit){
-
+    temperature = temperature*9/5+3200;
 	}
-
-	return resistance;
+	return temperature;
 
 }
 
