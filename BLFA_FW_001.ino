@@ -55,6 +55,10 @@ void setup(){
 	m6.attachPop(m6PopCallback);
 	delay(250);
 
+	//Initialize Display Values
+	uint32_t nexTempTarget = heater.getTarget()/100;
+	n0.setValue(nexTempTarget);
+
 	//Turn on fan
 	pinMode(VENTILATION_FAN,OUTPUT);
 	digitalWrite(VENTILATION_FAN, 1);
@@ -88,6 +92,10 @@ void loop(){
 	uint16_t serialDisplayRate = 1000;
 	if(millis() - previousSerialOutput > serialDisplayRate){
 		previousSerialOutput = millis();
+		
+		uint32_t nexTemp = loopTemp/100;
+		n3.setValue(nexTemp);
+
 		float displayTemp = (float)loopTemp/100.0;
 		bool i = loop_TR.getUnit();
 		bool heaterIsOn = heater.isON();
@@ -105,22 +113,31 @@ void m5PopCallback(void *ptr)
 {
   dbSerialPrintln("m5 Touched");
 
-  uint32_t number;
+	uint32_t number;
   uint32_t value;
 
   item.getValue(&value);
   if(value==0){
-    n3.getValue(&number);
-    number += 1;
-    n3.setValue(number);
+
+		n0.getValue(&number);
+		Serial.printlnf("number = %d",number);
+		number *= 100;
+		Serial.printlnf("number*100 = %d",number);
+		heater.setTarget(number);
+
+		float displayNumber = (float)number/100.0;
+		bool i = loop_TR.getUnit();
+		Serial.printlnf("Heater Target: %3.1f ",displayNumber);Serial.print(isFarenheit[i]);
+
+		number /=100;
+		Serial.printlnf("number/100 = %d",number);
+    n0.setValue(number);
+
+
   }else if(value==1){
-    n4.getValue(&number);
-    number += 1;
-    n4.setValue(number);
+
   }else if(value==2){
-    n5.getValue(&number);
-    number += 1;
-    n5.setValue(number);
+
   }
 }
 

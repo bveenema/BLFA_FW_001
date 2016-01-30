@@ -14,9 +14,13 @@ void Heater::update(uint16_t temperature){
   }
 }
 
-void Heater::setpoint(uint16_t temperature){
+void Heater::setTarget(uint16_t temperature){
   constrain(temperature,MINTEMP,MAXTEMP);
   _setpoint = temperature;
+}
+
+uint16_t Heater::getTarget(void){
+  return _setpoint;
 }
 bool Heater::isON(void){
   return _isON;
