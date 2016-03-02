@@ -19,13 +19,6 @@ void EnvironmentController::init(void){
 }
 
 void EnvironmentController::update(void){
-  // Fan Control
-    if(_fanAllowed){
-      _cFan.update(1,_targetFan);
-    }else{
-      _cFan.stop();
-    }
-
   // Temperature Control
     //Get Temperatures
     _cLoopHDC1008.ReadTempHumidity();
@@ -40,11 +33,6 @@ void EnvironmentController::update(void){
     //IF only Heater allowed
     if(_heaterAllowed && !_fridgeAllowed){
       _cHeater.update(currentTemperature,loopTemp);
-      if(_cHeater.isON()){
-        _cFan.update(1,HEATERONFANSPEED);
-      }else if(loopTemp > MINFANONLOOPTEMP){
-        _cFan.update(1,HEATERONFANSPEED);
-      }
       _cFridge.stop();
     }
 
@@ -54,9 +42,25 @@ void EnvironmentController::update(void){
     }
 
     //IF Heater and Fridge allowed
-      //IF current temp < target
-        //update H
+    if(_heaterAllowed && _fridgeAllowed){
+      if(currentTemperature < (_targetTemp - DEADBAND)){
+        _cHeater.update(currentTemperature,loopTemp);
+        _cFridge.stop();
+        _heaterFridgeDirection = 1;
+      }else if(currentTemperature > (_targetTemp + DEADBAND)){
+        _cHeater.stop(loopTemp);
+        _cFridge.update(currentTemperature);
+        _heaterFridgeDirection = 0;
+      }else if(_heaterFridgeDirection == 1){
+        _cHeater.update(currentTemperature,loopTemp);
+        _cFridge.stop();
+      }else if(_heaterFridgeDirection == 0){
+        _cHeater.stop(loopTemp);
+        _cFridge.update(currentTemperature);
+      }
+    }
 
+    //if neither Heater of Fridge allowed
     if(!_heaterAllowed && !_fridgeAllowed){
       _cFridge.stop();
       _cHeater.stop(loopTemp);
@@ -67,6 +71,17 @@ void EnvironmentController::update(void){
     //IF Humidifier allowed
       //Update Humidifier
     //Else Stop Humidifer
+
+  // Fan Control
+    if(_fanAllowed){
+      _cFan.update(1,_targetFan);
+    }else if(_cHeater.isON()){
+      _cFan.update(1,HEATERONFANSPEED);
+    }else if(loopTemp > MINFANONLOOPTEMP){
+      _cFan.update(1,HEATERONFANSPEED);
+    }else{
+      _cFan.stop();
+    }
 
 
 }

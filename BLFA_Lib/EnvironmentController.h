@@ -21,6 +21,8 @@
 #define MINFANONLOOPTEMP 3800
 #define HEATERONFANSPEED 10
 
+#define DEADBAND 50
+
 #include "application.h"
 #include "Fan.h"
 #include "Heater.h"
@@ -68,6 +70,7 @@ private:
   int16_t _targetTemp;
   uint8_t _targetRH, _targetFan, _mode;
   bool _heaterAllowed, _fridgeAllowed, _humidifierAllowed, _fanAllowed, _temperatureControlPoint;
+	bool _heaterFridgeDirection;
 
 	Heater& _cHeater;
 	Fridge& _cFridge;
