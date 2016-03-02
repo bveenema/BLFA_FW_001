@@ -23,7 +23,7 @@ public:
 	int16_t read(void);
 private:
 	uint16_t analogReadModeFilter(uint8_t numReads);
-	
+
 	uint8_t _pin;
 	bool _isFarenheit;
 	uint16_t _fixedRes;

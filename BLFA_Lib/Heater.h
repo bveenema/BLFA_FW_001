@@ -13,14 +13,19 @@
 
 #define MAXTEMP 3800
 #define MINTEMP 0
+#define MAXONTIME 7500
+#define MINDOWNTIME 35000
+#define MINONTIME 1000
+#define MINOFFTIME 50000
 
 #include "application.h"
 
 class Heater{
 public:
-	Heater(uint8_t pin, uint16_t setpoint);
-  void update(uint16_t temperature);
-  void setTarget(uint16_t temperature);
+	Heater(uint8_t pin);
+  void update(int16_t temperature, int16_t loopTemperature);
+	bool stop(int16_t loopTemperature);
+  void setTarget(int16_t temperature);
 	uint16_t getTarget(void);
   bool isON(void);
 private:
@@ -28,8 +33,9 @@ private:
   void OFF();
 
 	uint8_t _pin;
-  bool _isON;
-  uint16_t _setpoint;
+  bool _isON, _cycleUp;
+  int16_t _setpoint;
+	uint32_t _lastOnTime, _lastOffTime, _lastCycleTime;
 
 };
 

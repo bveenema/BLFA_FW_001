@@ -96,7 +96,7 @@ int16_t KS103J2::read(void){
   int16_t temperature = 0;
 
 	//Get Raw ADC
-	uint16_t adcRaw = analogReadModeFilter(100);
+	uint16_t adcRaw = analogReadModeFilter(15);
 
 	//Calculate Voltage (x100) =RAW/adcResolution*Vsupply
 	uint32_t voltage = adcRaw*3300/4096;
@@ -125,7 +125,6 @@ int16_t KS103J2::read(void){
 
 
 uint16_t KS103J2::analogReadModeFilter(uint8_t numReads){
-	constrain(numReads,5,250);
 	// read multiple values and sort them to take the mode
   uint16_t sortedValues[numReads];
   for(uint8_t i=0;i<numReads;i++){

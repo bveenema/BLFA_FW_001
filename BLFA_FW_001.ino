@@ -1,20 +1,28 @@
 #include "KS103J2.h"
 #include "Heater.h"
-//#include "Fridge.h"
+#include "Fridge.h"
+#include "Fan.h"
+#include "EnvironmentController.h"
+#include "HDC1000.h"
 #include "nextion.h"
+#include "ChamberLED.h"
 
 //Define Pins
 #define LOOP_THERMISTOR A0
+#define CHAMBER_THERMISTOR A1
+#define CHAMBER_LED A4
+#define VENTILATION_FAN A5
+#define FRIDGE_CTRL D5
+#define HEATER_CTRL D6
+#define HUMIDIFIER_CTRL D7
 
-#define VENTILATION_FAN D0
-#define HEATER_CTRL D5
-#define FRIDGE_CTRL D6
-
-SYSTEM_MODE(AUTOMATIC);
+SYSTEM_MODE(SEMI_AUTOMATIC);
+uint16_t ctof(uint16_t celsius);
+uint16_t ftoc(uint16_t Farenheit);
 
 //Globals
 const String isFarenheit[2]{
-	"Celcius",
+	"Celsius",
 	"Farenheit"
 };
 const String isON[2]{
@@ -22,143 +30,375 @@ const String isON[2]{
 	"ON"
 };
 
+const String Mode[5]{
+	"Beer",
+	"Cheese",
+	"Meat",
+	"Custom",
+  "Off"
+};
+
+bool temperatureUnit = 0; //0: Celsius, 1: Farenheit - For display only, software uses Celsius
+bool testHDC = 0;
+bool FLAG_nexPage1flag = 0;
+bool FLAG_nexPage3flag = 0;
+bool FLAG_nexPage3PopUpflag = 0;
+
 //Instantiate Library Objects
-Heater heater(HEATER_CTRL, 3250);
+Heater heater(HEATER_CTRL);
+Fan fan(VENTILATION_FAN);
+Fridge fridge(FRIDGE_CTRL);
+KS103J2 liquid_TR(LOOP_THERMISTOR,9990,0);  //Change to chamber thermistor TODO
+HDC1000 loop_HDC1008 = HDC1000();
+HDC1000 ambient_HDC1008 = HDC1000();
+EnvironmentController chamber(heater, fridge, fan, liquid_TR, loop_HDC1008, ambient_HDC1008);
+ChamberLED ChamberLED(CHAMBER_LED,100);
 
-// Fridge fridge(FRIDGE_CTRL);
-KS103J2 loop_TR(LOOP_THERMISTOR,9990,0);
 
-//Instantiate Nextion Display Objects
-NexNumber n0 = NexNumber(1, 8, "n0");
-NexNumber n1 = NexNumber(1, 10, "n1");
-NexNumber n2 = NexNumber(1, 11, "n2");
-NexNumber n3 = NexNumber(1, 12, "n3");
-NexNumber n4 = NexNumber(1, 13, "n4");
-NexNumber n5 = NexNumber(1, 14, "n5");
-NexHotspot m5 = NexHotspot(1, 9, "m5");
-NexHotspot m6 = NexHotspot(1, 7, "m6");
+//Instantiate Nextion Display Objects + Callbacks
+//Page 1 Objects + Callbacks
+NexNumber nexTempTarget = NexNumber(1, 8, "nexTempTarget");
+NexNumber nexRHTarget = NexNumber(1, 10, "nexRHTarget");
+NexNumber nexFanTarget = NexNumber(1, 11, "nexFanTarget");
+NexNumber nexTempCurrent = NexNumber(1, 12, "nexTempCurrent");
+NexNumber nexRHCurrent = NexNumber(1, 13, "nexRHCurrent");
+NexNumber nexFanCurrent = NexNumber(1, 14, "nexFanCurrent");
+NexHotspot nexSettingPlus = NexHotspot(1, 9, "nexSettingPlus");
+NexHotspot nexSettingMinu = NexHotspot(1, 7, "nexSettingMinu");
+NexTimer Page1Load = NexTimer(1, 18, "Page1Load");
 NexVar item = NexVar(1,17,"item");
-void m5PopCallback(void *ptr);
-void m6PopCallback(void *ptr);
+void nexSettingPlusPopCallback(void *ptr);
+void nexSettingMinuPopCallback(void *ptr);
+void Page1LoadCallback(void *ptr);
+
+//Page 2 Objects + Callbacks
+NexDSButton LightSwitch = NexDSButton(2,3,"LightSwitch");
+NexTimer Page2Load = NexTimer(2,9,"Page2Load");
+void LightSwitchCallback(void *ptr);
+void Page2LoadCallback(void *ptr);
+
+//Page 3 Objects + Callbacks
+NexPage SettingsPage = NexPage(3,0,"settings");
+NexTimer Page3Load = NexTimer(3,4,"Page3Load");
+NexDSButton CorF = NexDSButton(3,3,"CorF");
+NexDSButton WifiButton = NexDSButton(3,5,"WifiButton");
+NexCrop ModeButton = NexCrop(3,9,"ModeButton");
+NexHotspot ModeYes = NexHotspot(3,12,"ModeYes");
+NexVar modeVar = NexVar(3,7,"modeVar");
+void Page3LoadCallback(void *ptr);
+void CorFCallback(void *ptr);
+void WifiButtonCallback(void *ptr);
+void ModeButtonCallback(void *ptr);
+void ModeYesCallback(void *ptr);
+
 NexTouch *nex_listen_list[] =
 {
-  &m5,
-  &m6,
+  &nexSettingPlus,
+  &nexSettingMinu,
+	&Page1Load,
+	&LightSwitch,
+	&Page2Load,
+	&Page3Load,
+	&CorF,
+	&WifiButton,
+	&ModeButton,
+	&ModeYes,
   NULL
 };
 
 
 void setup(){
+  //Turn Electronics fan on
+  pinMode(HUMIDIFIER_CTRL, OUTPUT);
+  pinSetFast(HUMIDIFIER_CTRL);
 
+	// Initialize Serial and Nex Display
 	nexInit(115200);
-	m5.attachPop(m5PopCallback);
-	m6.attachPop(m6PopCallback);
+	nexSettingPlus.attachPop(nexSettingPlusPopCallback);
+	nexSettingMinu.attachPop(nexSettingMinuPopCallback);
+	Page1Load.attachTimer(Page1LoadCallback);
+	LightSwitch.attachPop(LightSwitchCallback);
+	Page2Load.attachTimer(Page2LoadCallback);
+	Page3Load.attachTimer(Page3LoadCallback);
+	CorF.attachPop(CorFCallback);
+	WifiButton.attachPop(WifiButtonCallback);
+	ModeButton.attachPop(ModeButtonCallback);
+	ModeYes.attachPop(ModeYesCallback);
 	delay(250);
 
-	//Initialize Display Values
-	uint32_t nexTempTarget = heater.getTarget()/100;
-	n0.setValue(nexTempTarget);
+	// Initialize Chamber
+	chamber.init();
+	chamber.setTemperatureControlPoint(0);
+  chamber.setMode(4);
+	chamber.setTargets(2000,0,0);
 
-	//Turn on fan
-	pinMode(VENTILATION_FAN,OUTPUT);
-	digitalWrite(VENTILATION_FAN, 1);
+	// Initialize HDC1008
+	testHDC = ambient_HDC1008.begin(0x41);
+  loop_HDC1008.begin(0x40);
+
+	Particle.connect();
+
+
+	delay(15);
 
 
 }
 void loop(){
+	static uint32_t loopTimer;
+	uint16_t loopTime = micros()-loopTimer;
+	//Serial.printlnf("LoopTime: %d",loopTime);
+	loopTimer = micros();
 	//Update Nextion Loop
 	nexLoop(nex_listen_list);
+
+
+	//Update Chamber
+	chamber.update();
 
 	//Check Serial
 	//TODO
 
-	//Read Loop Thermistor
-	int16_t loopTemp = loop_TR.read();
+	//Read Liquid Thermistor
+	int16_t liquidTemp = liquid_TR.read();
+
+  //Read Loop Temp and Humidity
+  loop_HDC1008.ReadTempHumidity();
+  int16_t loopTemp = loop_HDC1008.GetTemperatureInt();
+  uint16_t loopHumidity = loop_HDC1008.GetHumidityInt();
+
+	// Read Ambient Humidity
+	ambient_HDC1008.ReadTempHumidity();
+  int16_t ambTemp = ambient_HDC1008.GetTemperatureInt();
+	uint16_t ambHumidity = ambient_HDC1008.GetHumidityInt();
 
 	//Read Loop Humidity Sensor
 	//TODO
 
-	//Control Heater
-	bool heaterEnabled = 1;
-	if(heaterEnabled){
-		heater.update(loopTemp);
-	}
-
-	//Control Fridge
-	//TODO
-
-	//Output Current Values (serial + Nextion Display)
+	//Output Current Values + Loop Time (serial + Nextion Display)
 	static uint32_t previousSerialOutput;
-	uint16_t serialDisplayRate = 1000;
+	const uint16_t serialDisplayRate = 1000;
 	if(millis() - previousSerialOutput > serialDisplayRate){
 		previousSerialOutput = millis();
-		
-		uint32_t nexTemp = loopTemp/100;
-		n3.setValue(nexTemp);
 
-		float displayTemp = (float)loopTemp/100.0;
-		bool i = loop_TR.getUnit();
+		if(temperatureUnit){
+			loopTemp = ctof(loopTemp);
+		}
+
+		if(FLAG_nexPage1flag){
+			uint32_t nexTemp = (loopTemp/100)+((loopTemp%100)/50);
+			uint32_t nexHumidity = (loopHumidity/100)+((loopHumidity%100)/50);
+			uint8_t nexFanSpeed = fan.getTarget();
+			nexTempCurrent.setValue(nexTemp);
+			nexRHCurrent.setValue(nexHumidity);
+			nexFanCurrent.setValue(nexFanSpeed);
+		}
+
+		float displayLoopTemp = (float)loopTemp/100.0;
+    float displayLiquidTemp = (float)liquidTemp/100.0;
+    float displayAmbTemp = (float)ambTemp/100.0;
+    float displayLoopHumidity = (float)loopHumidity/100.0;
+		float displayAmbHumidity = (float)ambHumidity/100.0;
 		bool heaterIsOn = heater.isON();
-		Serial.printf("Loop Temp: %3.1f ",displayTemp);Serial.print(isFarenheit[i]);
-			Serial.print("\tHeater is: ");Serial.print(isON[heaterIsOn]);
+		Serial.printf("Loop Temp: %3.1f ",displayLoopTemp);Serial.print(isFarenheit[temperatureUnit]);
+			Serial.print("\tHeater is: ");Serial.println(isON[heaterIsOn]);
+    Serial.printf("Liquid Temp: %3.1f ",displayLiquidTemp);Serial.println(isFarenheit[temperatureUnit]);
+    Serial.printf("Ambient Temp: %3.1f ",displayAmbTemp);Serial.println(isFarenheit[temperatureUnit]);
+		Serial.printlnf("Loop Humidity: %2.1f",displayLoopHumidity);
+    Serial.printlnf("Ambient Humidity: %2.1f",displayAmbHumidity);
 			Serial.println(" ");
 	}
 }
 
 
 
+int16_t ctof(int16_t celsius){
+	int16_t farenheit = celsius*9/5+3200;
+	return farenheit;
+}
+int16_t ftoc(int16_t farenheit){
+	int16_t celsius = (farenheit-3200)*5/9;
+	return celsius;
+}
 
-
-void m5PopCallback(void *ptr)
-{
-  dbSerialPrintln("m5 Touched");
+void nexSettingPlusPopCallback(void *ptr){
+  dbSerialPrintln("nexSettingPlus Touched");
 
 	uint32_t number;
   uint32_t value;
 
   item.getValue(&value);
   if(value==0){
-
-		n0.getValue(&number);
-		Serial.printlnf("number = %d",number);
+		nexTempTarget.getValue(&number);
 		number *= 100;
-		Serial.printlnf("number*100 = %d",number);
-		heater.setTarget(number);
-
-		float displayNumber = (float)number/100.0;
-		bool i = loop_TR.getUnit();
-		Serial.printlnf("Heater Target: %3.1f ",displayNumber);Serial.print(isFarenheit[i]);
-
-		number /=100;
-		Serial.printlnf("number/100 = %d",number);
-    n0.setValue(number);
-
-
+		if(temperatureUnit){
+			number = ftoc((int16_t)number);
+		}
+		Serial.printlnf("heater target: %d",number);
+		chamber.setTargetTemp(number);
   }else if(value==1){
-
+		nexRHTarget.getValue(&number);
+		Serial.printlnf("RH target: %d",number);
+		chamber.setTargetRH(number);
   }else if(value==2){
-
+		nexFanTarget.getValue(&number);
+		Serial.printlnf("Fan target: %d",number);
+		chamber.setTargetFan(number);
   }
 }
 
-void m6PopCallback(void *ptr)
-{
-  dbSerialPrintln("m6 Touched");
+void nexSettingMinuPopCallback(void *ptr){
+  dbSerialPrintln("nexSettingMinu Touched");
   uint32_t number;
   uint32_t value;
 
   item.getValue(&value);
   if(value==0){
-    n3.getValue(&number);
-    number -= 1;
-    n3.setValue(number);
+		nexTempTarget.getValue(&number);
+		number *= 100;
+		if(temperatureUnit){
+			number = ftoc((int16_t)number);
+		}
+		Serial.printlnf("heater target: %d",number);
+		chamber.setTargetTemp(number);
   }else if(value==1){
-    n4.getValue(&number);
-    number -= 1;
-    n4.setValue(number);
+		nexRHTarget.getValue(&number);
+		Serial.printlnf("RH target: %d",number);
+		chamber.setTargetRH(number);
   }else if(value==2){
-    n5.getValue(&number);
-    number -= 1;
-    n5.setValue(number);
+		nexFanTarget.getValue(&number);
+		Serial.printlnf("Fan target: %d",number);
+		chamber.setTargetFan(number);
   }
+}
+
+void Page1LoadCallback(void *ptr){
+	//Stop timer from running again
+	Page1Load.disable();
+
+	//Set Page 1 FLAG Clear Page 3 FLAG
+	FLAG_nexPage1flag = 1;
+	FLAG_nexPage3flag = 0;
+
+	// Update Temperature Setpoint
+	int16_t number = chamber.getTargetTemp();
+	if(temperatureUnit){
+		number = ctof(number);
+	}
+	number /= 100;
+	nexTempTarget.setValue(number);
+
+	// Update RH Setpoint
+	uint8_t rh = chamber.getTargetRH();
+	nexRHTarget.setValue(rh);
+
+	// Update Fan Setpoint
+	uint8_t speed = chamber.getTargetFan();
+	nexFanTarget.setValue(speed);
+	//TODO
+
+	Serial.println("Page 1 Load");
+}
+
+void LightSwitchCallback(void *ptr){
+	uint32_t lightState = 0;
+	LightSwitch.getValue(&lightState);
+	if(lightState == 1){
+		ChamberLED.setState(1);
+		Serial.println("Light ON!");
+	}else if (lightState == 0){
+		ChamberLED.setState(0);
+		Serial.println("Light OFF!");
+	}else{
+		Serial.println("LightSwitch value error!!!");
+	}
+}
+
+void Page2LoadCallback(void *ptr){
+	//Stop timer from running again
+	Page2Load.disable();
+
+	//Clear Page 1 FLAG and Page 3 FLAG
+	FLAG_nexPage1flag = 0;
+	FLAG_nexPage3flag = 0;
+
+	// Update Chamber Light Button
+	uint32_t lightState = 0;
+	lightState = ChamberLED.getState();
+	LightSwitch.setValue(lightState);
+
+	Serial.println("Page 2 Load");
+}
+
+void Page3LoadCallback(void *ptr){
+	//Stop timer from running again
+	Page3Load.disable();
+
+	//Set Page 3 FLAG, Clear Page 1 FLAG, Clear PopUp FLAG
+	FLAG_nexPage3flag = 1;
+	FLAG_nexPage1flag = 0;
+	FLAG_nexPage3PopUpflag = 0;
+
+	//Update Mode Button
+  uint8_t number = chamber.getMode();
+	ModeButton.setPic(number+7);
+	modeVar.setValue(number);
+
+	// Update C or F Button
+	CorF.setValue(temperatureUnit);
+
+	//Update Wifi Button
+	WifiButton.setValue(Particle.connected());
+
+	Serial.println("Page 3 Load");
+
+}
+void CorFCallback(void *ptr){
+	uint32_t number;
+	CorF.getValue(&number);
+	if(number==1){
+		temperatureUnit=number;
+		Serial.println("Farenheit");
+	}else if(number==0){
+		temperatureUnit=number;
+		Serial.println("Celsius");
+	}else{
+		Serial.println("Temperature Unit detection Error!");
+	}
+}
+
+void WifiButtonCallback(void *ptr){
+	uint32_t number;
+	WifiButton.getValue(&number);
+	if(number == 1){
+		Serial.print("Connecting to cloud...");
+		Particle.connect();
+		Serial.println(" Connected!");
+	}else if(number == 0){
+		Serial.print("Disconnecting from cloud...");
+		Particle.disconnect();
+		Serial.println(" Disconnected :(");
+	}else{
+		Serial.println("WifiButton value error!!!");
+	}
+}
+
+void ModeButtonCallback(void *ptr){
+	//Set PopUp FLAG
+	FLAG_nexPage3PopUpflag = 1;
+
+	Serial.println("Mode PopUp");
+}
+
+void ModeYesCallback(void *ptr){
+	Serial.print("New Mode: ");
+	uint32_t number;
+
+	modeVar.getValue(&number);
+	if(number<5){
+		chamber.setMode(number);
+		Serial.println(Mode[number]);
+	}else{
+		Serial.println("ERROR!");
+	}
+  SettingsPage.show();
 }
