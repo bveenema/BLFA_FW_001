@@ -11,6 +11,7 @@
 //Define Pins
 #define AMBIENT_THERMISTOR A0
 #define CHAMBER_THERMISTOR A1
+#define LOOP_THERMISTOR A2
 #define SOLENOID_1 A3
 #define CHAMBER_LED A4
 #define VENTILATION_FAN A5
@@ -52,9 +53,10 @@ Fridge fridge(FRIDGE_CTRL);
 Humidifier humidifier(SOLENOID_1);
 Fan fan(VENTILATION_FAN);
 KS103J2 liquid_TR(CHAMBER_THERMISTOR,9990,0);
-HDC1000 loop_HDC1008 = HDC1000();
+KS103J2 loop_TR(LOOP_THERMISTOR,9990,0);
+HDC1000 chamber_HDC1008 = HDC1000();
 HDC1000 ambient_HDC1008 = HDC1000();
-EnvironmentController chamber(heater, fridge, humidifier, fan, liquid_TR, loop_HDC1008, ambient_HDC1008);
+EnvironmentController chamber(heater, fridge, humidifier, fan, liquid_TR, loop_TR, chamber_HDC1008, ambient_HDC1008);
 ChamberLED ChamberLED(CHAMBER_LED,100);
 
 
@@ -137,7 +139,7 @@ void setup(){
 
 	// Initialize HDC1008
 	testHDC = ambient_HDC1008.begin(0x41);
-  loop_HDC1008.begin(0x40);
+  chamber_HDC1008.begin(0x40);
 
 	Particle.connect();
 
@@ -164,18 +166,18 @@ void loop(){
 	//Read Liquid Thermistor
 	int16_t liquidTemp = liquid_TR.read();
 
-  //Read Loop Temp and Humidity
-  loop_HDC1008.ReadTempHumidity();
-  int16_t loopTemp = loop_HDC1008.GetTemperatureInt();
-  uint16_t loopHumidity = loop_HDC1008.GetHumidityInt();
+  //Read Chamber Temp and Humidity
+  chamber_HDC1008.ReadTempHumidity();
+  int16_t chamberTemp = chamber_HDC1008.GetTemperatureInt();
+  uint16_t chamberHumidity = chamber_HDC1008.GetHumidityInt();
 
 	// Read Ambient Humidity
 	ambient_HDC1008.ReadTempHumidity();
   int16_t ambTemp = ambient_HDC1008.GetTemperatureInt();
 	uint16_t ambHumidity = ambient_HDC1008.GetHumidityInt();
 
-	//Read Loop Humidity Sensor
-	//TODO
+	//Read Loop Thermistor
+	int16_t loopTemp = loop_TR.read();
 
 	//Output Current Values + Loop Time (serial + Nextion Display)
 	static uint32_t previousSerialOutput;
@@ -184,29 +186,31 @@ void loop(){
 		previousSerialOutput = millis();
 
 		if(temperatureUnit){
-			loopTemp = ctof(loopTemp);
+			chamberTemp = ctof(chamberTemp);
 		}
 
 		if(FLAG_nexPage1flag){
-			uint32_t nexTemp = (loopTemp/100)+((loopTemp%100)/50);
-			uint32_t nexHumidity = (loopHumidity/100)+((loopHumidity%100)/50);
+			uint32_t nexTemp = (chamberTemp/100)+((chamberTemp%100)/50);
+			uint32_t nexHumidity = (chamberHumidity/100)+((chamberHumidity%100)/50);
 			uint8_t nexFanSpeed = fan.getTarget();
 			nexTempCurrent.setValue(nexTemp);
 			nexRHCurrent.setValue(nexHumidity);
 			nexFanCurrent.setValue(nexFanSpeed);
 		}
 
-		float displayLoopTemp = (float)loopTemp/100.0;
+		float displayChamberTemp = (float)chamberTemp/100.0;
     float displayLiquidTemp = (float)liquidTemp/100.0;
+		float displayLoopTemp = (float)loopTemp/100.0;
     float displayAmbTemp = (float)ambTemp/100.0;
-    float displayLoopHumidity = (float)loopHumidity/100.0;
+    float displayChamberHumidity = (float)chamberHumidity/100.0;
 		float displayAmbHumidity = (float)ambHumidity/100.0;
 		bool heaterIsOn = heater.isON();
-		Serial.printf("Loop Temp: %3.1f ",displayLoopTemp);Serial.print(isFarenheit[temperatureUnit]);
+		Serial.printf("Chamber Temp: %3.1f ",displayChamberTemp);Serial.print(isFarenheit[temperatureUnit]);
 			Serial.print("\tHeater is: ");Serial.println(isON[heaterIsOn]);
     Serial.printf("Liquid Temp: %3.1f ",displayLiquidTemp);Serial.println(isFarenheit[temperatureUnit]);
+		Serial.printf("Loop Temp: %3.1f ",displayLoopTemp);Serial.println(isFarenheit[temperatureUnit]);
     Serial.printf("Ambient Temp: %3.1f ",displayAmbTemp);Serial.println(isFarenheit[temperatureUnit]);
-		Serial.printlnf("Loop Humidity: %2.1f",displayLoopHumidity);
+		Serial.printlnf("Chamber Humidity: %2.1f",displayChamberHumidity);
     Serial.printlnf("Ambient Humidity: %2.1f",displayAmbHumidity);
 			Serial.println(" ");
 	}

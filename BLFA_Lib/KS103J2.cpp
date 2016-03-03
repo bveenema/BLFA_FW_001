@@ -97,6 +97,12 @@ int16_t KS103J2::read(void){
 
 	//Get Raw ADC
 	uint16_t adcRaw = analogReadModeFilter(15);
+  //Prevent divide by zero error in voltage calculation
+  //if adcRaw is 100 or less we are already far outside
+  //of our read range
+  if(adcRaw < 100){
+    adcRaw = 100;
+  }
 
 	//Calculate Voltage (x100) =RAW/adcResolution*Vsupply
 	uint32_t voltage = adcRaw*3300/4096;

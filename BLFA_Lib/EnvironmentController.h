@@ -33,7 +33,7 @@
 
 class EnvironmentController{
 public:
-	EnvironmentController(Heater&, Fridge&, Humidifier&, Fan&, KS103J2&, HDC1000&, HDC1000&);
+	EnvironmentController(Heater&, Fridge&, Humidifier&, Fan&, KS103J2&, KS103J2&, HDC1000&, HDC1000&);
   void init(uint16_t targetTemp, uint8_t targetRH, uint8_t targetFan);
   void init(void);
   void update(void);
@@ -77,8 +77,8 @@ private:
 	Fridge& _cFridge;
 	Humidifier& _cHumidifier;
 	Fan& _cFan;
-	KS103J2& _cLiquidTemp;
-	HDC1000& _cLoopHDC1008, _cAmbientHDC1008;
+	KS103J2& _cLiquidTemp, _cLoopTemp;
+	HDC1000& _cChamberHDC1008, _cAmbientHDC1008;
 };
 
 #endif
