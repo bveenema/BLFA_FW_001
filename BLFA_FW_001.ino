@@ -1,6 +1,7 @@
 #include "KS103J2.h"
 #include "Heater.h"
 #include "Fridge.h"
+#include "Humidifier.h"
 #include "Fan.h"
 #include "EnvironmentController.h"
 #include "HDC1000.h"
@@ -8,8 +9,9 @@
 #include "ChamberLED.h"
 
 //Define Pins
-#define LOOP_THERMISTOR A0
+#define AMBIENT_THERMISTOR A0
 #define CHAMBER_THERMISTOR A1
+#define SOLENOID_1 A3
 #define CHAMBER_LED A4
 #define VENTILATION_FAN A5
 #define FRIDGE_CTRL D5
@@ -46,12 +48,13 @@ bool FLAG_nexPage3PopUpflag = 0;
 
 //Instantiate Library Objects
 Heater heater(HEATER_CTRL);
-Fan fan(VENTILATION_FAN);
 Fridge fridge(FRIDGE_CTRL);
-KS103J2 liquid_TR(LOOP_THERMISTOR,9990,0);  //Change to chamber thermistor TODO
+Humidifier humidifier(SOLENOID_1);
+Fan fan(VENTILATION_FAN);
+KS103J2 liquid_TR(CHAMBER_THERMISTOR,9990,0);
 HDC1000 loop_HDC1008 = HDC1000();
 HDC1000 ambient_HDC1008 = HDC1000();
-EnvironmentController chamber(heater, fridge, fan, liquid_TR, loop_HDC1008, ambient_HDC1008);
+EnvironmentController chamber(heater, fridge, humidifier, fan, liquid_TR, loop_HDC1008, ambient_HDC1008);
 ChamberLED ChamberLED(CHAMBER_LED,100);
 
 

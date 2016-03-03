@@ -1,8 +1,9 @@
 #include "EnvironmentController.h"
 
-EnvironmentController::EnvironmentController(Heater& cHeater, Fridge& cFridge, Fan& cFan, KS103J2& cLiquidTemp, HDC1000& cLoopHDC1008, HDC1000& cAmbientHDC1008):
+EnvironmentController::EnvironmentController(Heater& cHeater, Fridge& cFridge, Humidifier& cHumidifier, Fan& cFan, KS103J2& cLiquidTemp, HDC1000& cLoopHDC1008, HDC1000& cAmbientHDC1008):
   _cHeater(cHeater),
   _cFridge(cFridge),
+  _cHumidifier(cHumidifier),
   _cFan(cFan),
   _cLiquidTemp(cLiquidTemp),
   _cLoopHDC1008(cLoopHDC1008),
@@ -68,9 +69,13 @@ void EnvironmentController::update(void){
 
 
   // Humidity Control
-    //IF Humidifier allowed
-      //Update Humidifier
-    //Else Stop Humidifer
+    if(_humidifierAllowed){
+      uint16_t currentHumidity = _cLoopHDC1008.GetHumidityInt();
+      _cHumidifier.update(currentHumidity);
+    }else{
+      _cHumidifier.stop();
+    }
+
 
   // Fan Control
     if(_fanAllowed){

@@ -24,15 +24,16 @@
 #define DEADBAND 50
 
 #include "application.h"
-#include "Fan.h"
 #include "Heater.h"
 #include "Fridge.h"
+#include "Humidifier.h"
+#include "Fan.h"
 #include "KS103J2.h"
 #include "HDC1000.h"
 
 class EnvironmentController{
 public:
-	EnvironmentController(Heater&, Fridge&, Fan&, KS103J2&, HDC1000&, HDC1000&);
+	EnvironmentController(Heater&, Fridge&, Humidifier&, Fan&, KS103J2&, HDC1000&, HDC1000&);
   void init(uint16_t targetTemp, uint8_t targetRH, uint8_t targetFan);
   void init(void);
   void update(void);
@@ -74,6 +75,7 @@ private:
 
 	Heater& _cHeater;
 	Fridge& _cFridge;
+	Humidifier& _cHumidifier;
 	Fan& _cFan;
 	KS103J2& _cLiquidTemp;
 	HDC1000& _cLoopHDC1008, _cAmbientHDC1008;
