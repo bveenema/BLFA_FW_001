@@ -18,6 +18,7 @@ bool Humidifier::stop(){
 }
 void Humidifier::setTarget(uint16_t rh){
   _setpoint = constrain(rh,MINRH,MAXRH);
+  Serial.printlnf("Hum Target: %d",_setpoint);
 }
 uint16_t Humidifier::getTarget(void){
   return _setpoint;

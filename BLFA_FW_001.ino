@@ -190,7 +190,12 @@ void loop(){
 		}
 
 		if(FLAG_nexPage1flag){
-			uint32_t nexTemp = (chamberTemp/100)+((chamberTemp%100)/50);
+			uint32_t nexTemp = 0;
+			if(chamber.getTemperatureControlPoint()){
+				nexTemp = (liquidTemp/100)+((liquidTemp%100)/50);
+			}else{
+				nexTemp = (chamberTemp/100)+((chamberTemp%100)/50);
+			}
 			uint32_t nexHumidity = (chamberHumidity/100)+((chamberHumidity%100)/50);
 			uint8_t nexFanSpeed = fan.getTarget();
 			nexTempCurrent.setValue(nexTemp);
@@ -245,6 +250,7 @@ void nexSettingPlusPopCallback(void *ptr){
   }else if(value==1){
 		nexRHTarget.getValue(&number);
 		Serial.printlnf("RH target: %d",number);
+		number=number*100;
 		chamber.setTargetRH(number);
   }else if(value==2){
 		nexFanTarget.getValue(&number);

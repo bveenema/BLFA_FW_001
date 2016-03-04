@@ -157,14 +157,19 @@ void EnvironmentController::setTargets(uint16_t targetTemp, uint8_t targetRH, ui
   _targetTemp = constrain(targetTemp,MINTEMP,MAXTEMP);
   _targetRH = constrain(targetRH,MINRH,MAXRH);
   _targetFan = constrain(targetFan,MINFAN,MAXFAN);
+  _cHeater.setTarget(_targetTemp);
+  _cFridge.setTarget(_targetTemp);
+  _cHumidifier.setTarget(_targetRH);
+  _cFan.setTarget(_targetFan);
 }
 void EnvironmentController::setTargetTemp(uint16_t temperature){
   _targetTemp = constrain(temperature,MINTEMP,MAXTEMP);
   _cHeater.setTarget(_targetTemp);
   _cFridge.setTarget(_targetTemp);
 }
-void EnvironmentController::setTargetRH(uint8_t RH){
+void EnvironmentController::setTargetRH(uint16_t RH){
   _targetRH = constrain(RH,MINRH,MAXRH);
+  _cHumidifier.setTarget(_targetRH);
 }
 void EnvironmentController::setTargetFan(uint8_t Fan){
   _targetFan = constrain(Fan,MINFAN,MAXFAN);

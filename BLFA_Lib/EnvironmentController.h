@@ -56,7 +56,7 @@ public:
   //Targets
   void setTargets(uint16_t targetTemp, uint8_t targetRH, uint8_t targetFan);
   void setTargetTemp(uint16_t temperature);
-  void setTargetRH(uint8_t RH);
+  void setTargetRH(uint16_t RH);
   void setTargetFan(uint8_t Fan);
 	int16_t getTargetTemp(void);
   uint8_t getTargetRH(void);
@@ -69,7 +69,8 @@ public:
 private:
 
   int16_t _targetTemp;
-  uint8_t _targetRH, _targetFan, _mode;
+	uint16_t _targetRH;
+  uint8_t _targetFan, _mode;
   bool _heaterAllowed, _fridgeAllowed, _humidifierAllowed, _fanAllowed, _temperatureControlPoint;
 	bool _heaterFridgeDirection;
 
