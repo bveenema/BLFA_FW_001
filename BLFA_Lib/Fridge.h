@@ -13,8 +13,8 @@
 
 #define MAXTEMP 3800
 #define MINTEMP 0
-#define MINONTIME 10000 //6 minutes = 360000
-#define MINOFFTIME 10000
+#define MINONTIME 360000 //6 minutes = 360000
+#define MINOFFTIME 360000
 
 #include "application.h"
 

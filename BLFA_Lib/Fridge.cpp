@@ -41,10 +41,10 @@ bool Fridge::isON(void){
   return _isON;
 }
 void Fridge::ON(){
-  pinSetFast(_pin);
+  digitalWrite(_pin, HIGH);
   _isON = 1;
 }
 void Fridge::OFF(){
-  pinResetFast(_pin);
+  digitalWrite(_pin, LOW);
   _isON = 0;
 }
