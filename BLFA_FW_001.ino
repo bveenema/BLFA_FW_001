@@ -1,3 +1,6 @@
+//Release Identifier String
+String releaseString = "3/13/16 15:01 Development";
+
 #include "KS103J2.h"
 #include "Heater.h"
 #include "Fridge.h"
@@ -117,6 +120,9 @@ NexTouch *nex_listen_list[] =
 
 
 void setup(){
+	//Release String Variable Setup
+	Particle.variable("release",releaseString);
+
   //Turn Electronics fan on
   pinMode(HUMIDIFIER_CTRL, OUTPUT);
   pinSetFast(HUMIDIFIER_CTRL);
