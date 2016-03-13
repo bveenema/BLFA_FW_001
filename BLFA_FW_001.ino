@@ -1,5 +1,5 @@
 //Release Identifier String
-String releaseString = "3/13/16 15:36 Development";
+String releaseString = "3/13/16 16:12 Development";
 
 //Sysem Settings
 SYSTEM_THREAD(ENABLED);
@@ -201,6 +201,7 @@ void loop(){
 
 		if(FLAG_nexPage1flag){
 			uint32_t nexTemp = 0;
+			uint32_t number = 0;
 			if(chamber.getTemperatureControlPoint()){
 				nexTemp = (liquidTemp/100)+((liquidTemp%100)/50);
 			}else{
@@ -211,6 +212,20 @@ void loop(){
 			nexTempCurrent.setValue(nexTemp);
 			nexRHCurrent.setValue(nexHumidity);
 			nexFanCurrent.setValue(nexFanSpeed);
+
+			nexTempTarget.getValue(&number);
+			number *= 100;
+			if(temperatureUnit){
+				number = ftoc((int16_t)number);
+			}
+			chamber.setTargetTemp(number);
+
+			nexRHTarget.getValue(&number);
+			number=number*100;
+			chamber.setTargetRH(number);
+
+			nexFanTarget.getValue(&number);
+			chamber.setTargetFan(number);
 		}
 
 		float displayChamberTemp = (float)chamberTemp/100.0;
