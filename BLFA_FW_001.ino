@@ -1,3 +1,6 @@
+//Release Identifier String
+String releaseString = "3/13/16 15:01 Development";
+
 #include "KS103J2.h"
 #include "Heater.h"
 #include "Fridge.h"
@@ -87,14 +90,17 @@ NexPage SettingsPage = NexPage(3,0,"settings");
 NexTimer Page3Load = NexTimer(3,4,"Page3Load");
 NexDSButton CorF = NexDSButton(3,3,"CorF");
 NexDSButton WifiButton = NexDSButton(3,5,"WifiButton");
+NexDSButton ListenButton = NexDSButton(3,6,"bt0");
 NexCrop ModeButton = NexCrop(3,9,"ModeButton");
 NexHotspot ModeYes = NexHotspot(3,12,"ModeYes");
 NexVar modeVar = NexVar(3,7,"modeVar");
 void Page3LoadCallback(void *ptr);
 void CorFCallback(void *ptr);
 void WifiButtonCallback(void *ptr);
+void ListenButtonCallback(void *ptr);
 void ModeButtonCallback(void *ptr);
 void ModeYesCallback(void *ptr);
+
 
 NexTouch *nex_listen_list[] =
 {
@@ -106,6 +112,7 @@ NexTouch *nex_listen_list[] =
 	&Page3Load,
 	&CorF,
 	&WifiButton,
+	&ListenButton,
 	&ModeButton,
 	&ModeYes,
   NULL
@@ -113,6 +120,9 @@ NexTouch *nex_listen_list[] =
 
 
 void setup(){
+	//Release String Variable Setup
+	Particle.variable("release",releaseString);
+
   //Turn Electronics fan on
   pinMode(HUMIDIFIER_CTRL, OUTPUT);
   pinSetFast(HUMIDIFIER_CTRL);
@@ -392,6 +402,21 @@ void WifiButtonCallback(void *ptr){
 		Serial.println(" Disconnected :(");
 	}else{
 		Serial.println("WifiButton value error!!!");
+	}
+}
+
+void ListenButtonCallback(void *ptr){
+	uint32_t number;
+	ListenButton.getValue(&number);
+	if(number == 1){
+		Serial.println("Listening...");
+		WiFi.listen();
+		Serial.println(" Setup Complete");
+	}else if(number == 0){
+		WiFi.listen();
+		Serial.println("No Longer Listening");
+	}else{
+		Serial.println("Listen button ERROR!!!");
 	}
 }
 
