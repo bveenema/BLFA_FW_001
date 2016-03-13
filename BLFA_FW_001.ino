@@ -1,5 +1,9 @@
 //Release Identifier String
-String releaseString = "3/13/16 15:01 Development";
+String releaseString = "3/13/16 15:36 Development";
+
+//Sysem Settings
+SYSTEM_THREAD(ENABLED);
+SYSTEM_MODE(SEMI_AUTOMATIC);
 
 #include "KS103J2.h"
 #include "Heater.h"
@@ -22,7 +26,6 @@ String releaseString = "3/13/16 15:01 Development";
 #define HEATER_CTRL D6
 #define HUMIDIFIER_CTRL D7
 
-SYSTEM_MODE(SEMI_AUTOMATIC);
 uint16_t ctof(uint16_t celsius);
 uint16_t ftoc(uint16_t Farenheit);
 
@@ -122,6 +125,7 @@ NexTouch *nex_listen_list[] =
 void setup(){
 	//Release String Variable Setup
 	Particle.variable("release",releaseString);
+	Particle.connect();
 
   //Turn Electronics fan on
   pinMode(HUMIDIFIER_CTRL, OUTPUT);
@@ -151,13 +155,9 @@ void setup(){
 	testHDC = ambient_HDC1008.begin(0x41);
   chamber_HDC1008.begin(0x40);
 
-	Particle.connect();
-
-
 	delay(15);
-
-
 }
+
 void loop(){
 	static uint32_t loopTimer;
 	uint16_t loopTime = micros()-loopTimer;
