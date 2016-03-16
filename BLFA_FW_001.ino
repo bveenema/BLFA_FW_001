@@ -1,5 +1,7 @@
+#include "application.h"
+
 //Release Identifier String
-String releaseString = "3/13/16 16:12 Development";
+String releaseString = "3/16/16 0608 Development";
 
 //Sysem Settings
 SYSTEM_THREAD(ENABLED);
@@ -141,6 +143,7 @@ void setup(){
 	Page3Load.attachTimer(Page3LoadCallback);
 	CorF.attachPop(CorFCallback);
 	WifiButton.attachPop(WifiButtonCallback);
+	ListenButton.attachPop(ListenButtonCallback);
 	ModeButton.attachPop(ModeButtonCallback);
 	ModeYes.attachPop(ModeYesCallback);
 	delay(250);
