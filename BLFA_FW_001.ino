@@ -1,7 +1,7 @@
 #include "application.h"
 
 //Release Identifier String
-String releaseString = "3/16/16 0608 Development";
+String releaseString = "3/18/16 0528 Development";
 
 //Sysem Settings
 SYSTEM_THREAD(ENABLED);
@@ -208,9 +208,11 @@ void loop(){
 			if(chamber.getTemperatureControlPoint()){
 				nexTemp = (liquidTemp/100)+((liquidTemp%100)/50);
 			}else{
-				nexTemp = (chamberTemp/100)+((chamberTemp%100)/50);
+				//nexTemp = (chamberTemp/100)+((chamberTemp%100)/50);
+				nexTemp = (ambTemp/100)+((ambTemp%100)/50);
 			}
-			uint32_t nexHumidity = (chamberHumidity/100)+((chamberHumidity%100)/50);
+			//uint32_t nexHumidity = (chamberHumidity/100)+((chamberHumidity%100)/50);
+			uint32_t nexHumidity = (ambHumidity/100)+((ambHumidity%100)/50);
 			uint8_t nexFanSpeed = fan.getTarget();
 			nexTempCurrent.setValue(nexTemp);
 			nexRHCurrent.setValue(nexHumidity);
@@ -427,11 +429,10 @@ void ListenButtonCallback(void *ptr){
 	uint32_t number;
 	ListenButton.getValue(&number);
 	if(number == 1){
+		WiFi.listen();
 		Serial.println("Listening...");
-		WiFi.listen();
-		Serial.println(" Setup Complete");
 	}else if(number == 0){
-		WiFi.listen();
+		WiFi.listen(false);
 		Serial.println("No Longer Listening");
 	}else{
 		Serial.println("Listen button ERROR!!!");
