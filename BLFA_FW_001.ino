@@ -55,6 +55,8 @@ bool FLAG_nexPage1flag = 0;
 bool FLAG_nexPage3flag = 0;
 bool FLAG_nexPage3PopUpflag = 0;
 
+uint32_t timeStartedListening = 0;
+
 //Instantiate Library Objects
 Heater heater(HEATER_CTRL);
 Fridge fridge(FRIDGE_CTRL);
@@ -249,6 +251,12 @@ void loop(){
     Serial.printlnf("Ambient Humidity: %2.1f",displayAmbHumidity);
 			Serial.println(" ");
 	}
+	if(WiFi.listening()){
+		if(millis()-timeStartedListening > 5000){
+			WiFi.listen(false);
+			Serial1.begin(115200);
+		}
+	}
 }
 
 
@@ -431,6 +439,7 @@ void ListenButtonCallback(void *ptr){
 	if(number == 1){
 		WiFi.listen();
 		Serial.println("Listening...");
+		timeStartedListening = millis();
 	}else if(number == 0){
 		WiFi.listen(false);
 		Serial.println("No Longer Listening");
