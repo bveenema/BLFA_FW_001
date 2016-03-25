@@ -21,7 +21,7 @@
 #define NEX_RET_CMD_FINISHED                (0x01)
 #define NEX_RET_EVENT_LAUNCHED              (0x88)
 #define NEX_RET_EVENT_UPGRADED              (0x89)
-#define NEX_RET_EVENT_TOUCH_HEAD            (0x65)     
+#define NEX_RET_EVENT_TOUCH_HEAD            (0x65)
 #define NEX_RET_EVENT_POSITION_HEAD         (0x67)
 #define NEX_RET_EVENT_SLEEP_POSITION_HEAD   (0x68)
 #define NEX_RET_CURRENT_PAGE_ID_HEAD        (0x66)
@@ -38,7 +38,7 @@
 #define NEX_RET_INVALID_OPERATION           (0x1B)
 
 
-int bkCmd = 1;             // command execution response behaviour 
+int bkCmd = 1;             // command execution response behaviour
                            // 0 .. no response
                            // 1 .. onSuccess (default
                            // 2 .. noFail
@@ -193,12 +193,12 @@ void sendCommand(const char* cmd)
 }
 
 /*
-* Send a batch of commands (skript) each terminated by three 0xFF 
+* Send a batch of commands (skript) each terminated by three 0xFF
 * bytes to Nextion.
 * If noRR is set TRUE
-*   For the batch the command execution result response gets 
+*   For the batch the command execution result response gets
 *   temporarily deactivated.
-*   After completion it will be reactivated and set to the 
+*   After completion it will be reactivated and set to the
 *   previously saved state (bkCmd).
 *
 * @param cmd  - the string of command.
@@ -210,7 +210,7 @@ void sendSkript(const char* cmd, bool noRR)
   while (nexSerial.read() >= 0);            // flush RX buffer only
   if (noRR)
     nexSerial.print("bkcmd=0\xff\xff\xff"); // deactivate result response
-  nexSerial.print(cmd);                 
+  nexSerial.print(cmd);
   if (noRR)
   {
     snprintf(buf, sizeof(buf), "bkcmd=%d\xff\xff\xff", bkCmd);
@@ -275,6 +275,7 @@ bool nexInit(uint32_t baudrate)
   return ret1 && ret2;
 }
 
+
 void nexLoop(NexTouch *nex_listen_list[])
 {
   static uint8_t __buffer[20];
@@ -287,7 +288,7 @@ void nexLoop(NexTouch *nex_listen_list[])
 #if defined(SPARK)
     Particle.process();
 #endif
-    delay(10); 
+    delay(10);
 
     c = nexSerial.read();
 
@@ -351,6 +352,18 @@ void nexLoop(NexTouch *nex_listen_list[])
           i = __buffer[4] | (((unsigned long)__buffer[5]) << 8) | (((unsigned long)__buffer[6]) << 16) | (((unsigned long)__buffer[6]) << 24);
           dbSerialPrintln(i);
           NexTouch::iterate(nex_listen_list, __buffer[1], __buffer[2], (int32_t)__buffer[3], (void *)&(__buffer[4]));
+        }
+      }
+    }
+    else if(NEX_RET_EVENT_SLEEP_POSITION_HEAD == c){
+      if(nexSerial.available() >= 8){
+        __buffer[0] = c;
+        for(i = 1; i < 9; i++){
+          __buffer[i] = nexSerial.read();
+        }
+        if (0xFF == __buffer[6] && 0xFF == __buffer[7] && 0xFF == __buffer[8])
+        {
+          NexTouch::iterate(nex_listen_list,0,0,(int32_t)__buffer[5],NULL);
         }
       }
     }

@@ -1,13 +1,13 @@
 /**
 * @file Nextion.h
 *
-* The header file including all other header files provided by this library. 
+* The header file including all other header files provided by this library.
 *
-* Every example sketch should include this file. 
+* Every example sketch should include this file.
 *
 * @author  Wu Pengfei (email:<pengfei.wu@itead.cc>)
 * @date    2015/8/12
-* @copyright 
+* @copyright
 * Copyright (C) 2014-2015 ITEAD Intelligent Systems Co., Ltd. \n
 * This program is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public License as
@@ -46,6 +46,7 @@
 #include "NexVar.h"
 #include "NexWaveform.h"
 #include "NexTimer.h"
+#include "NexSleep.h"
 
 #include "NexGraphing.h"
 
