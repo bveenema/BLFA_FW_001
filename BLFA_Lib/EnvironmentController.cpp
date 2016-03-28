@@ -161,6 +161,8 @@ void EnvironmentController::setTargets(uint16_t targetTemp, uint8_t targetRH, ui
   _cFridge.setTarget(_targetTemp);
   _cHumidifier.setTarget(_targetRH);
   _cFan.setTarget(_targetFan);
+
+	Serial.println("Chamber Hum Set");
 }
 void EnvironmentController::setTargetTemp(uint16_t temperature){
   _targetTemp = constrain(temperature,MINTEMP,MAXTEMP);
@@ -178,7 +180,7 @@ void EnvironmentController::setTargetFan(uint8_t Fan){
 int16_t EnvironmentController::getTargetTemp(void){
   return _targetTemp;
 }
-uint8_t EnvironmentController::getTargetRH(void){
+uint16_t EnvironmentController::getTargetRH(void){
   return _targetRH;
 }
 uint8_t EnvironmentController::getTargetFan(void){

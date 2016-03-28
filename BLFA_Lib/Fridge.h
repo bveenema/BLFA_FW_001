@@ -11,7 +11,7 @@
 #ifndef Fridge_h
 #define Fridge_h
 
-#define MAXTEMP 3800
+#define MAXTEMP 5000
 #define MINTEMP 0
 #define MINONTIME 360000 //6 minutes = 360000
 #define MINOFFTIME 360000

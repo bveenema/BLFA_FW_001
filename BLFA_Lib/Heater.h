@@ -11,7 +11,7 @@
 #ifndef Heater_h
 #define Heater_h
 
-#define MAXTEMP 3800
+#define MAXTEMP 5000
 #define MINTEMP 0
 #define MAXONTIME 7500
 #define MINDOWNTIME 35000

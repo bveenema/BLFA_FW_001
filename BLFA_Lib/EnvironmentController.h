@@ -11,9 +11,9 @@
 #ifndef EnvironmentController_h
 #define EnvironmentController_h
 
-#define MAXTEMP 3800
+#define MAXTEMP 5000
 #define MINTEMP 0
-#define MAXRH 100
+#define MAXRH 9900
 #define MINRH 0
 #define MAXFAN 10
 #define MINFAN 0
@@ -59,7 +59,7 @@ public:
   void setTargetRH(uint16_t RH);
   void setTargetFan(uint8_t Fan);
 	int16_t getTargetTemp(void);
-  uint8_t getTargetRH(void);
+  uint16_t getTargetRH(void);
   uint8_t getTargetFan(void);
 
 	//Control Points
@@ -68,9 +68,9 @@ public:
 
 private:
 
+	uint8_t _targetFan, _mode;
   int16_t _targetTemp;
 	uint16_t _targetRH;
-  uint8_t _targetFan, _mode;
   bool _heaterAllowed, _fridgeAllowed, _humidifierAllowed, _fanAllowed, _temperatureControlPoint;
 	bool _heaterFridgeDirection;
 

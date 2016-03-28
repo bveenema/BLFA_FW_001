@@ -1,7 +1,7 @@
 #include "application.h"
 
 //Release Identifier String
-String releaseString = "3/18/16 0528 Development";
+String releaseString = "3/28/16 1241 Development";
 
 //Sysem Settings
 SYSTEM_THREAD(ENABLED);
@@ -183,9 +183,10 @@ void setup(){
 	chamber.setTemperatureControlPoint(0);
   chamber.setMode(4);
 	chamber.setTargets(2000,0,0);
+	Serial.println("Setup Chamber Set Targets");
 
 	// Initialize HDC1008
-	testHDC = ambient_HDC1008.begin(0x41);
+	ambient_HDC1008.begin(0x41);
   chamber_HDC1008.begin(0x40);
 
 	delay(15);
@@ -245,24 +246,6 @@ void loop(){
 			nexTempCurrent.setValue(nexTemp);
 			nexRHCurrent.setValue(nexHumidity);
 			nexFanCurrent.setValue(nexFanSpeed);
-
-			nexTempTarget.getValue(&number);
-			number *= 100;
-			if(nexTemperatureUnit){
-				number = ftoc((int32_t)number);
-			}
-			chamber.setTargetTemp(number);
-
-			nexRHTarget.getValue(&number);
-			number=number*100;
-			chamber.setTargetRH(number);
-
-			nexFanTarget.getValue(&number);
-			chamber.setTargetFan(number);
-
-			/*//Get Current Page
-			int16_t testNexPage = NexSendCommand(NexGETPAGE,"");
-			Serial.printlnf("Current Nextion Page: %d",testNexPage);*/
 
 			//Serial Output
 			float displayChamberTemp = (float)chamberTemp/100.0;
@@ -333,8 +316,8 @@ void nexSettingPlusPopCallback(void *ptr){
 		chamber.setTargetTemp(number);
   }else if(value==1){
 		nexRHTarget.getValue(&number);
-		Serial.printlnf("RH target: %d",number);
 		number=number*100;
+		Serial.printlnf("RH target: %d",number);
 		chamber.setTargetRH(number);
   }else if(value==2){
 		nexFanTarget.getValue(&number);
@@ -359,6 +342,7 @@ void nexSettingMinuPopCallback(void *ptr){
 		chamber.setTargetTemp(number);
   }else if(value==1){
 		nexRHTarget.getValue(&number);
+		number *= 100;
 		Serial.printlnf("RH target: %d",number);
 		chamber.setTargetRH(number);
   }else if(value==2){
@@ -380,11 +364,13 @@ void Page1LoadCallback(void *ptr){
 	if(nexTemperatureUnit){
 		number = ctof(number);
 	}
-	number /= 100;
+	number = (number/100)+((number%100)/50);
 	nexTempTarget.setValue(number);
 
 	// Update RH Setpoint
-	uint8_t rh = chamber.getTargetRH();
+	uint16_t rh = chamber.getTargetRH();
+	Serial.printlnf("Chamber RH Load: %d",rh);
+	rh = (rh/100)+((rh%100)/50);
 	nexRHTarget.setValue(rh);
 
 	// Update Fan Setpoint
